@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Oli Voice Interaction App — background/conversation state machine."""
 
+import re
 import sys
 import yaml
 from modules.audio import AudioCapture
 from modules.stt import STT
 from modules.llm import LLM
 from modules.tts import TTS
+
+
+_END_CONV = re.compile(r"\[?END_CONVERSATION\]?", re.IGNORECASE)
 
 
 def load_config(path: str = "config.yaml") -> dict:
@@ -135,8 +139,8 @@ def main():
                 sys.exit(0)
 
             reply = llm.chat(text)
-            end_conv = "[END_CONVERSATION]" in reply
-            reply_clean = reply.replace("[END_CONVERSATION]", "").strip()
+            end_conv = bool(_END_CONV.search(reply))
+            reply_clean = _END_CONV.sub("", reply).strip()
             print(f"  {name}: {reply_clean}")
             tts.speak(reply_clean)
 
