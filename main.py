@@ -16,7 +16,8 @@ def load_config(path: str = "config.yaml") -> dict:
 
 
 def main():
-    cfg = load_config()
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
+    cfg = load_config(config_path)
 
     audio = AudioCapture(
         sample_rate=cfg["audio"]["sample_rate"],
@@ -44,17 +45,35 @@ def main():
         voice=cfg["tts"]["voice"],
         speed=cfg["tts"]["speed"],
         output_device=cfg["tts"].get("output_device"),
+        piper_bin=cfg["tts"].get("piper_bin"),
     )
 
     name = cfg["persona"]["name"]
-    print(f"\n{name} is ready. Listening for wake word: '{cfg['wake_word']['phrase']}'\n")
+    wake_phrase = cfg["wake_word"]["phrase"]
+    ptt_mode = cfg.get("push_to_talk", False)
 
-    for audio_chunk in audio.stream():
-        if not wake.check(audio_chunk):
-            continue
+    print(f"\n{name} is ready.")
+    if ptt_mode:
+        print("Mode: push-to-talk — press Enter to speak, Ctrl+C to quit.\n")
+        tts.speak(f"Hello, I'm {name}. Press Enter whenever you want to speak.")
+    else:
+        print(f"Mode: wake word — say '{wake_phrase.replace('_', ' ')}' to speak.\n")
+        tts.speak(f"Hello, I'm {name}. Say {wake_phrase.replace('_', ' ')} to talk to me.")
 
-        print(f"[wake word detected]")
-        tts.speak(f"Yes, I'm here.")
+    while True:
+        if ptt_mode:
+            input("  [press Enter to speak]")
+            tts.speak("Yes?")
+        else:
+            triggered = False
+            for audio_chunk in audio.stream():
+                if wake.check(audio_chunk):
+                    triggered = True
+                    break
+            if not triggered:
+                continue
+            print("[wake word detected]")
+            tts.speak("Yes, I'm here.")
 
         utterance_audio = audio.record_until_silence(
             silence_threshold_ms=cfg["audio"]["silence_threshold_ms"],

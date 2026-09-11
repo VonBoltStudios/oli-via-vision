@@ -1,45 +1,33 @@
-"""Text-to-speech via Piper TTS."""
+"""Text-to-speech via Piper TTS (Python API)."""
 
-import subprocess
-import tempfile
-import os
+import numpy as np
 import sounddevice as sd
-import soundfile as sf
+from piper.voice import PiperVoice
+from piper.config import SynthesisConfig
 
 
 class TTS:
-    def __init__(self, voice: str, speed: float, output_device=None):
-        self.voice = voice
-        self.speed = speed
+    def __init__(self, voice: str, speed: float, output_device=None, **kwargs):
+        """
+        voice: path to the .onnx model file
+        speed: speech rate multiplier (1.0 = normal)
+        """
         self.output_device = output_device
-        print(f"[TTS] Using Piper voice: {voice}")
+        self.syn_config = SynthesisConfig(length_scale=1.0 / speed)
+        print(f"[TTS] Loading Piper voice: {voice}")
+        self.model = PiperVoice.load(voice)
+        self.sample_rate = self.model.config.sample_rate
+        print(f"[TTS] Ready. Sample rate: {self.sample_rate}Hz")
 
     def speak(self, text: str):
-        """Synthesize text and play audio via speaker."""
+        """Synthesize text and play via speaker."""
         if not text:
             return
 
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            wav_path = f.name
+        chunks = list(self.model.synthesize(text, syn_config=self.syn_config))
+        if not chunks:
+            return
 
-        try:
-            # Piper CLI: echo "text" | piper --model <voice> --output_file out.wav
-            subprocess.run(
-                [
-                    "piper",
-                    "--model", self.voice,
-                    "--output_file", wav_path,
-                    "--length_scale", str(1.0 / self.speed),
-                ],
-                input=text.encode(),
-                check=True,
-                capture_output=True,
-            )
-
-            data, sample_rate = sf.read(wav_path)
-            sd.play(data, sample_rate, device=self.output_device)
-            sd.wait()
-
-        finally:
-            if os.path.exists(wav_path):
-                os.unlink(wav_path)
+        audio = np.concatenate([c.audio_float_array for c in chunks])
+        sd.play(audio, self.sample_rate, device=self.output_device)
+        sd.wait()
