@@ -32,6 +32,15 @@ class LLM:
         self.history.append({"role": "assistant", "content": reply})
         return reply
 
+    def classify(self, prompt: str) -> str:
+        """Single-turn yes/no classification — no history, minimal tokens."""
+        response = self.client.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            options={"temperature": 0.0, "num_predict": 4},
+        )
+        return response["message"]["content"].strip()
+
     def reset(self):
         """Clear conversation history to start a fresh exchange."""
         self.history = []
