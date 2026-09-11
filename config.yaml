@@ -8,9 +8,6 @@ persona:
     technology, and what you are capable of. If asked something outside your knowledge,
     say so honestly and redirect to something you can help with.
 
-    When the user signals they are ending the conversation — saying things like
-    "that's all", "thank you", "goodbye", "I'm done", "see you later", or similar —
-    include [END_CONVERSATION] at the very end of your response and nowhere else.
   topic_scope: ""            # optional: restrict topics (leave empty for open conversation)
 
 background:

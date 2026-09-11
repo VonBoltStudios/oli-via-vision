@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 """Oli Voice Interaction App — background/conversation state machine."""
 
-import re
 import sys
 import yaml
 from modules.audio import AudioCapture
 from modules.stt import STT
 from modules.llm import LLM
 from modules.tts import TTS
-
-
-_END_CONV = re.compile(r"\[?END_CONVERSATION\]?", re.IGNORECASE)
 
 
 def load_config(path: str = "config.yaml") -> dict:
@@ -138,14 +134,19 @@ def main():
                 tts.speak("Shutting down.")
                 sys.exit(0)
 
-            reply = llm.chat(text)
-            end_conv = bool(_END_CONV.search(reply))
-            reply_clean = _END_CONV.sub("", reply).strip()
-            print(f"  {name}: {reply_clean}")
-            tts.speak(reply_clean)
+            exit_prompt = (
+                f'The user said: "{text}"\n'
+                f'Are they signaling the end of the conversation — saying goodbye, '
+                f'done, that\'s all, thanks, see you, etc.? Reply YES or NO only.'
+            )
+            is_ending = "YES" in llm.classify(exit_prompt).upper()
 
-            if end_conv:
-                print("  [conversation ended by Oli]")
+            reply = llm.chat(text)
+            print(f"  {name}: {reply}")
+            tts.speak(reply)
+
+            if is_ending:
+                print("  [conversation ended]")
                 break
 
 
