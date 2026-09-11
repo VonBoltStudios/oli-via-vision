@@ -3,5 +3,6 @@ __pycache__/
 *.pyc
 *.pyo
 config.mac.yaml
+voices/
 *.onnx
 *.wav

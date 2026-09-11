@@ -34,7 +34,7 @@ llm:
   max_tokens: 256
 
 tts:
-  voice: "en_US-lessac-medium"
+  voice: "voices/en_US-lessac-medium.onnx"   # relative to project root; install.sh downloads here
   speed: 1.0
   output_device: null
 

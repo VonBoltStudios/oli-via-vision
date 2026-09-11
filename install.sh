@@ -9,7 +9,7 @@ echo "Platform: $(uname -m) | $(lsb_release -ds 2>/dev/null || echo 'unknown')"
 echo ""
 
 # --- System dependencies ---
-echo "[1/5] Installing system dependencies..."
+echo "[1/4] Installing system dependencies..."
 sudo apt-get update -q
 sudo apt-get install -y -q \
     python3-pip \
@@ -20,51 +20,38 @@ sudo apt-get install -y -q \
     curl
 
 # --- Python virtual environment ---
-echo "[2/5] Creating Python virtual environment..."
+echo "[2/4] Creating Python virtual environment..."
 python3 -m venv .venv
 source .venv/bin/activate
 
 pip install --upgrade pip -q
 pip install -q \
     faster-whisper \
-    openwakeword \
+    piper-tts \
     ollama \
     sounddevice \
     soundfile \
     pyyaml \
     numpy
 
-# --- Piper TTS ---
-echo "[3/5] Installing Piper TTS..."
-PIPER_VERSION="1.2.0"
-ARCH="aarch64"
-PIPER_DIR="$HOME/.local/share/piper"
-mkdir -p "$PIPER_DIR"
-
-if [ ! -f "$PIPER_DIR/piper" ]; then
-    PIPER_URL="https://github.com/rhasspy/piper/releases/download/${PIPER_VERSION}/piper_${ARCH}.tar.gz"
-    wget -q "$PIPER_URL" -O /tmp/piper.tar.gz
-    tar -xzf /tmp/piper.tar.gz -C "$PIPER_DIR" --strip-components=1
-    rm /tmp/piper.tar.gz
-fi
-
-# Add piper to PATH for this session
-export PATH="$PIPER_DIR:$PATH"
-
-# Download default voice if not present
-VOICE_DIR="$PIPER_DIR/voices"
+# --- Piper voice download ---
+echo "[3/4] Downloading Piper TTS voice..."
+VOICE_DIR="$(pwd)/voices"
 mkdir -p "$VOICE_DIR"
 VOICE="en_US-lessac-medium"
 if [ ! -f "$VOICE_DIR/${VOICE}.onnx" ]; then
-    echo "  Downloading voice: $VOICE"
+    echo "  Downloading: $VOICE"
     wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/${VOICE}.onnx" \
         -O "$VOICE_DIR/${VOICE}.onnx"
     wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/${VOICE}.onnx.json" \
         -O "$VOICE_DIR/${VOICE}.onnx.json"
+    echo "  Voice saved to $VOICE_DIR/"
+else
+    echo "  Voice already present — skipping."
 fi
 
 # --- Ollama ---
-echo "[4/5] Installing Ollama..."
+echo "[4/4] Installing Ollama and pulling LLM..."
 if ! command -v ollama &>/dev/null; then
     curl -fsSL https://ollama.ai/install.sh | sh
 fi
@@ -73,11 +60,16 @@ echo "  Starting Ollama service..."
 ollama serve &>/dev/null &
 sleep 3
 
-echo "  Pulling llama3.1:8b (this may take a while)..."
+echo "  Pulling llama3.1:8b (this may take a few minutes)..."
 ollama pull llama3.1:8b
 
 # --- Done ---
-echo "[5/5] Setup complete."
 echo ""
-echo "To start Oli: ./start.sh"
-echo "To configure: edit config.yaml"
+echo "=== Installation complete ==="
+echo ""
+echo "To start Oli:   ./start.sh"
+echo "To configure:   edit config.yaml"
+echo ""
+echo "Voice files are in: voices/"
+echo "To use a different voice, download the .onnx and .onnx.json files"
+echo "from https://huggingface.co/rhasspy/piper-voices and update tts.voice in config.yaml"
