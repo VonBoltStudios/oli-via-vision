@@ -38,12 +38,12 @@ pip install -q \
 echo "[3/4] Downloading Piper TTS voice..."
 VOICE_DIR="$(pwd)/voices"
 mkdir -p "$VOICE_DIR"
-VOICE="en_US-lessac-medium"
+VOICE="en_US-ryan-high"
 if [ ! -f "$VOICE_DIR/${VOICE}.onnx" ]; then
     echo "  Downloading: $VOICE"
-    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/${VOICE}.onnx" \
+    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/${VOICE}.onnx" \
         -O "$VOICE_DIR/${VOICE}.onnx"
-    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/${VOICE}.onnx.json" \
+    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/${VOICE}.onnx.json" \
         -O "$VOICE_DIR/${VOICE}.onnx.json"
     echo "  Voice saved to $VOICE_DIR/"
 else
