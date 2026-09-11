@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+config.mac.yaml
+*.onnx
+*.wav
