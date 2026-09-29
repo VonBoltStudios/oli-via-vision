@@ -6,3 +6,4 @@ config.mac.yaml
 voices/
 *.onnx
 *.wav
+.DS_Store
