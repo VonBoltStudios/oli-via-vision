@@ -33,10 +33,13 @@ llm:
   temperature: 0.7
   max_tokens: 256
 
+sdk:
+  host: "10.192.1.2"
+  port: 5000
+
 tts:
   voice: "voices/en_US-ryan-high.onnx"   # relative to project root; install.sh downloads here
   speed: 1.0
-  output_device: null
 
 audio:
   sample_rate: 16000

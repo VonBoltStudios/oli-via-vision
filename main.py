@@ -3,7 +3,7 @@
 
 import sys
 import yaml
-from modules.audio import AudioCapture
+from modules.audio import WSAudioCapture
 from modules.stt import STT
 from modules.llm import LLM
 from modules.tts import TTS
@@ -18,7 +18,9 @@ def main():
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
     cfg = load_config(config_path)
 
-    audio = AudioCapture(
+    audio = WSAudioCapture(
+        host=cfg["sdk"]["host"],
+        port=cfg["sdk"]["port"],
         sample_rate=cfg["audio"]["sample_rate"],
         channels=cfg["audio"]["channels"],
         chunk_ms=cfg["audio"]["chunk_ms"],
@@ -39,7 +41,8 @@ def main():
     tts = TTS(
         voice=cfg["tts"]["voice"],
         speed=cfg["tts"]["speed"],
-        output_device=cfg["tts"].get("output_device"),
+        sdk_host=cfg["sdk"]["host"],
+        sdk_port=cfg["sdk"]["port"],
     )
 
     name = cfg["persona"]["name"]
