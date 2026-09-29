@@ -29,6 +29,7 @@ pip install -q \
     faster-whisper \
     piper-tts \
     ollama \
+    websocket-client \
     sounddevice \
     soundfile \
     pyyaml \
@@ -38,12 +39,12 @@ pip install -q \
 echo "[3/4] Downloading Piper TTS voice..."
 VOICE_DIR="$(pwd)/voices"
 mkdir -p "$VOICE_DIR"
-VOICE="en_US-ryan-high"
+VOICE="en_US-ryan-medium"
 if [ ! -f "$VOICE_DIR/${VOICE}.onnx" ]; then
     echo "  Downloading: $VOICE"
-    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/${VOICE}.onnx" \
+    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium/${VOICE}.onnx" \
         -O "$VOICE_DIR/${VOICE}.onnx"
-    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/high/${VOICE}.onnx.json" \
+    wget -q "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ryan/medium/${VOICE}.onnx.json" \
         -O "$VOICE_DIR/${VOICE}.onnx.json"
     echo "  Voice saved to $VOICE_DIR/"
 else
@@ -60,8 +61,8 @@ echo "  Starting Ollama service..."
 ollama serve &>/dev/null &
 sleep 3
 
-echo "  Pulling llama3.1:8b (this may take a few minutes)..."
-ollama pull llama3.1:8b
+echo "  Pulling qwen2.5:3b (this may take a few minutes)..."
+ollama pull qwen2.5:3b
 
 # --- Done ---
 echo ""

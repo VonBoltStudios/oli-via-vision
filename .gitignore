@@ -7,3 +7,4 @@ voices/
 *.onnx
 *.wav
 .DS_Store
+_deprecated/

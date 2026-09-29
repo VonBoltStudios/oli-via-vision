@@ -22,14 +22,14 @@ conversation:
 shutdown_command: "shut down the voice service"   # exact phrase triggers sys.exit
 
 stt:
-  model: "large-v3"          # faster-whisper model size
+  model: "medium"             # faster-whisper model size (confirmed on Oli: medium)
   language: "en"
   device: "cuda"
   compute_type: "float16"
 
 llm:
   base_url: "http://localhost:11434"
-  model: "llama3.1:8b"
+  model: "qwen2.5:3b"         # confirmed on Oli: good perf/quality balance
   temperature: 0.7
   max_tokens: 256
 
@@ -38,7 +38,7 @@ sdk:
   port: 5000
 
 tts:
-  voice: "voices/en_US-ryan-high.onnx"   # relative to project root; install.sh downloads here
+  voice: "voices/en_US-ryan-medium.onnx"  # confirmed on Oli: good perf/quality balance
   speed: 1.0
 
 audio:
