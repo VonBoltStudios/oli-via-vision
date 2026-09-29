@@ -138,6 +138,12 @@ class WSAudioCapture:
         if self._ws:
             self._ws.close()
 
+    def flush(self):
+        """Discard buffered audio — call after TTS playback to prevent self-response."""
+        with self._buf_lock:
+            self._buf.clear()
+            self._buf_event.clear()
+
     def __enter__(self):
         return self
 

@@ -71,6 +71,7 @@ def main():
     else:
         print("Mode: background listening — speak naturally to start a conversation.\n")
         tts.speak(f"Hello, I'm {name}. Just speak to me whenever you're ready.")
+    audio.flush()
 
     while True:
         # ── BACKGROUND MODE ───────────────────────────────────────────────────
@@ -107,6 +108,7 @@ def main():
 
         # ── CONVERSATION MODE ─────────────────────────────────────────────────
         tts.speak("Yes?")
+        audio.flush()
         llm.reset()
 
         while True:
@@ -125,6 +127,7 @@ def main():
                 if utterance is None:
                     print("\n  [conversation timeout — returning to background]")
                     tts.speak("I'll be here if you need me.")
+                    audio.flush()
                     break
 
             text = stt.transcribe(utterance, sample_rate=cfg["audio"]["sample_rate"])
@@ -147,6 +150,7 @@ def main():
             reply = llm.chat(text)
             print(f"  {name}: {reply}")
             tts.speak(reply)
+            audio.flush()
 
             if is_ending:
                 print("  [conversation ended]")
