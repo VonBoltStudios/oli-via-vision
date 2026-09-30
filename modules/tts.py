@@ -6,6 +6,7 @@ import time
 import uuid
 
 import numpy as np
+import onnxruntime as ort
 import websocket
 from piper.voice import PiperVoice
 from piper.config import SynthesisConfig
@@ -28,6 +29,9 @@ class TTS:
 
         print(f"[TTS] Loading Piper voice: {voice}")
         self.model = PiperVoice.load(voice)
+        self.model.session = ort.InferenceSession(
+            voice, providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+        )
         self.sample_rate = self.model.config.sample_rate
         print(f"[TTS] Ready. Sample rate: {self.sample_rate}Hz")
 
