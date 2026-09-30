@@ -62,6 +62,8 @@ else
     pip uninstall -y onnxruntime onnxruntime-gpu 2>/dev/null || true
     pip install --force-reinstall --no-deps "$WHEEL_FILE"
     rm -f "$WHEEL_FILE"
+    # onnxruntime 1.19.0 was compiled against NumPy 1.x; pin to avoid import crash on NumPy 2.x
+    pip install "numpy<2"
     echo "  Done."
     echo "  Verify: python3 -c \"import onnxruntime; print(onnxruntime.get_available_providers())\""
 fi
