@@ -46,7 +46,7 @@ echo ""
 #   3. Set ONNXRUNTIME_WHEEL below to the download URL for your JetPack version.
 #
 echo "[2/2] Patching ONNX Runtime with Jetson GPU wheel..."
-ONNXRUNTIME_WHEEL=""  # <-- set this to the wheel URL once JetPack version is confirmed
+ONNXRUNTIME_WHEEL="https://nvidia.box.com/shared/static/6l0u97rj80ifwkk8rqbzj1try89fk26z.whl"  # onnxruntime 1.19.0, JetPack 6.0 (L4T r36.x), Python 3.10
 
 if [ -z "$ONNXRUNTIME_WHEEL" ]; then
     echo "  SKIP: ONNXRUNTIME_WHEEL not set."
