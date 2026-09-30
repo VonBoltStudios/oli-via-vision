@@ -54,8 +54,14 @@ if [ -z "$ONNXRUNTIME_WHEEL" ]; then
     echo "  wheel at https://elinux.org/Jetson_Zoo, set ONNXRUNTIME_WHEEL in"
     echo "  this script, and re-run."
 else
-    pip uninstall -y onnxruntime
-    pip install "$ONNXRUNTIME_WHEEL"
+    # nvidia.box.com URLs redirect to a hash-named file — pip can't determine
+    # the wheel filename from the URL alone, so download it first with a real name.
+    WHEEL_FILE="/tmp/onnxruntime_gpu-1.19.0-cp310-cp310-linux_aarch64.whl"
+    echo "  Downloading wheel..."
+    wget -q -O "$WHEEL_FILE" "$ONNXRUNTIME_WHEEL"
+    pip uninstall -y onnxruntime onnxruntime-gpu 2>/dev/null || true
+    pip install --force-reinstall --no-deps "$WHEEL_FILE"
+    rm -f "$WHEEL_FILE"
     echo "  Done."
     echo "  Verify: python3 -c \"import onnxruntime; print(onnxruntime.get_available_providers())\""
 fi
