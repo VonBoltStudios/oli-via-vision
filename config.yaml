@@ -48,8 +48,8 @@ sdk:
 tts:
   voice: "voices/en_US-ryan-medium.onnx"  # confirmed on Oli: good perf/quality balance
   speed: 1.0
-  lead_in_ms: 300             # leading silence so a cold speaker doesn't clip short clips
-  tail_ms: 500                # extra wait before disabling playback so clip ends aren't cut off
+  lead_in_ms: 800             # leading silence so a cold speaker doesn't clip short clips
+  tail_ms: 800                # extra wait before disabling playback so clip ends aren't cut off
 
 audio:
   sample_rate: 16000
