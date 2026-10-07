@@ -26,6 +26,7 @@ unmute_command: "resume listening"    # says unmute_ack
 mute_ack: "Okay, I'll stay quiet until you tell me to resume."
 unmute_ack: "Okay, I'm listening again. Ready when you are."
 wake_ack: "Yes, I'm listening. How can I help?"
+startup_phrase: "Hello, I'm {name}. Just speak to me whenever you're ready."   # spoken once when ready; {name} = persona.name
 
 # Pre-recorded audio: saying `phrase` plays `file` (WAV on the robot) instead of live TTS.
 # Works in background and conversation mode, muted or not; does not change mute state and

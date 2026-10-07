@@ -87,6 +87,7 @@ def main():
     mute_ack = cfg.get("mute_ack", "Ok.")
     unmute_ack = cfg.get("unmute_ack", "Ready.")
     wake_ack = cfg.get("wake_ack", "Yes?")
+    startup_phrase = cfg.get("startup_phrase", "Hello, I'm {name}. Just speak to me whenever you're ready.")
     muted = False  # soft mute: keep transcribing, but only act on mute/unmute/shutdown commands
 
     bg = cfg.get("background", {})
@@ -110,7 +111,7 @@ def main():
         tts.speak(f"Hello, I'm {name}. Press Enter whenever you want to speak.")
     else:
         print("Mode: background listening — speak naturally to start a conversation.\n")
-        tts.speak(f"Hello, I'm {name}. Just speak to me whenever you're ready.")
+        tts.speak(startup_phrase.replace("{name}", name))
     audio.flush()
 
     while True:
