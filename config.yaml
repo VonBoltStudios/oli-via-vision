@@ -18,15 +18,15 @@ shutdown_command: "shut down the voice service"   # exact phrase triggers sys.ex
 
 # Soft mute: keep transcribing but do not respond (or wake) until unmuted.
 # Matching ignores case and punctuation. Each may be a string or a list of phrases.
-mute_command: "oli stop listening"        # says "Ok." and drops to background mode
-unmute_command: "oli resume listening"    # says "Ready."
+mute_command: "mute yourself"        # says "Ok." and drops to background mode
+unmute_command: "resume listening"    # says "Ready."
 
 # Pre-recorded audio: saying `phrase` plays `file` (WAV on the robot) instead of live TTS.
 # Works in background and conversation mode, muted or not; does not change mute state and
 # is not added to the LLM conversation history. A bare filename resolves against the app
 # root; use a full path (or URL) for anywhere else.
 audio_commands:
-  - phrase: "oli play intro"
+  - phrase: "give us a speech"
     file: "intro.wav"
 
 stt:
