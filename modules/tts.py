@@ -4,6 +4,7 @@ import json
 import threading
 import time
 import uuid
+import wave
 
 import numpy as np
 import onnxruntime as ort
@@ -169,3 +170,36 @@ class TTS:
         remaining = sent_s - (time.monotonic() - start)
         time.sleep(max(0.3, remaining + 0.2))
         self._send("request_audio_playback_control", {"enable": 0})
+
+    # ── Pre-recorded audio ────────────────────────────────────────────────────
+
+    @staticmethod
+    def _wav_duration(path: str) -> float | None:
+        """Duration in seconds of a local WAV, or None if unreadable (URL, other host)."""
+        try:
+            with wave.open(path, "rb") as w:
+                return w.getnframes() / float(w.getframerate())
+        except Exception:
+            return None
+
+    def play_file(self, path: str, timeout: float = 180.0) -> bool:
+        """Play a pre-recorded WAV (path/URL on the robot) via request_audio_play_file.
+
+        Blocks until playback should be finished: if the SDK holds its response until
+        playback ends we return then; otherwise we sleep out the WAV's remaining duration.
+        """
+        start = time.monotonic()
+        try:
+            resp = self._send("request_audio_play_file", {"file_path": path}, timeout=timeout)
+        except Exception as e:
+            print(f"[TTS] play_file error: {e}")
+            return False
+        if resp.get("result") != "success":
+            print(f"[TTS] play_file failed: {resp.get('message', resp.get('result'))}")
+            return False
+        dur = self._wav_duration(path)
+        if dur:
+            remaining = dur - (time.monotonic() - start)
+            if remaining > 0:
+                time.sleep(remaining + 0.2)
+        return True

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Oli Voice Interaction App — background/conversation state machine."""
 
+import os
 import re
 import sys
 import yaml
@@ -27,6 +28,13 @@ def _phrases(value) -> list:
     if isinstance(value, str):
         value = [value]
     return [_norm(v) for v in value if v]
+
+
+def _resolve_audio_path(f: str) -> str:
+    """Absolute paths and URLs pass through; bare filenames resolve against the app root."""
+    if os.path.isabs(f) or "://" in f:
+        return f
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), f)
 
 
 def main():
@@ -65,6 +73,17 @@ def main():
     shutdown_cmd = cfg.get("shutdown_command", "shut down the voice service").lower()
     mute_cmds = _phrases(cfg.get("mute_command", "oli stop listening"))
     unmute_cmds = _phrases(cfg.get("unmute_command", "oli resume listening"))
+    audio_cmds = [
+        (_norm(e["phrase"]), _resolve_audio_path(e["file"]))
+        for e in cfg.get("audio_commands") or []
+        if e.get("phrase") and e.get("file")
+    ]
+
+    def audio_command(text: str):
+        """Return the audio file for a matching trigger phrase, else None."""
+        norm = _norm(text)
+        return next((f for phrase, f in audio_cmds if phrase in norm), None)
+
     muted = False  # soft mute: keep transcribing, but only act on mute/unmute/shutdown commands
 
     bg = cfg.get("background", {})
@@ -116,6 +135,13 @@ def main():
                     print(f"\n  [shutdown command]")
                     tts.speak("Shutting down.")
                     sys.exit(0)
+
+                clip_file = audio_command(text)
+                if clip_file:
+                    print(f"\n  [audio command: {clip_file}]")
+                    tts.play_file(clip_file)
+                    audio.flush()
+                    continue
 
                 norm = _norm(text)
                 if muted:
@@ -175,6 +201,13 @@ def main():
             if shutdown_cmd in text.lower():
                 tts.speak("Shutting down.")
                 sys.exit(0)
+
+            clip_file = audio_command(text)
+            if clip_file:
+                print(f"  [audio command: {clip_file}]")
+                tts.play_file(clip_file)
+                audio.flush()
+                continue
 
             if any(c in _norm(text) for c in mute_cmds):
                 print("  [mute command — returning to background]")
