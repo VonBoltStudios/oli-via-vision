@@ -104,6 +104,28 @@ https://huggingface.co/rhasspy/piper-voices
 
 Download the `.onnx` and `.onnx.json` files for your chosen voice into the `voices/` directory, then update `tts.voice` in `config.yaml` with the new path.
 
+## Recording prepared statements
+
+`record_speech.py` generates WAV files with the same Piper voice and speed as live Oli — no Whisper, LLM, or mic needed. Run it in the same environment:
+
+```bash
+source .venv/bin/activate
+python3 record_speech.py [config.yaml]
+```
+
+1. Enter a title (becomes the filename; blank gives `TTS_YY-MM-DD_hhmmss`).
+2. Type or paste the text and finish with a blank line — or give the path to a plain text file.
+3. A progress indicator shows while it generates; the file is saved to `recordings/` (gitignored).
+4. Choose **p**review (plays it on Oli through the SDK), **r**egenerate (overwrites the same file), **n**ew prompt, or **e**xit.
+
+Use a recording by adding it to `audio_commands`; relative paths resolve against the app root:
+
+```yaml
+audio_commands:
+  - phrase: "give us a speech"
+    file: "recordings/intro.wav"
+```
+
 ## Uninstalling
 
 ```bash

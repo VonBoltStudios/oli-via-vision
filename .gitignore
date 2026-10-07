@@ -8,3 +8,4 @@ voices/
 *.wav
 .DS_Store
 _deprecated/
+recordings/

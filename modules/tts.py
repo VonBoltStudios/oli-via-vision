@@ -22,6 +22,7 @@ class TTS:
         sdk_port: int = 5000,
         chunk_ms: int = 100,
         buffer_ms: int = 1000,
+        connect: bool = True,
         **kwargs,
     ):
         self.chunk_ms = chunk_ms
@@ -44,7 +45,13 @@ class TTS:
         self._pending_lock = threading.Lock()
         self._ws: websocket.WebSocketApp | None = None
 
-        self._connect()
+        if connect:
+            self._connect()
+
+    def ensure_connected(self):
+        """Open the SDK WebSocket if it was deferred (connect=False)."""
+        if self._ws is None:
+            self._connect()
 
     # ── WS infrastructure ─────────────────────────────────────────────────────
 
@@ -118,6 +125,14 @@ class TTS:
             self._ws.close()
 
     # ── Speak ─────────────────────────────────────────────────────────────────
+
+    def synthesize(self, text: str) -> np.ndarray:
+        """Synthesize text with Piper; return mono int16 PCM at self.sample_rate."""
+        chunks = list(self.model.synthesize(text, syn_config=self.syn_config))
+        if not chunks:
+            return np.zeros(0, dtype=np.int16)
+        audio_f32 = np.concatenate([c.audio_float_array for c in chunks])
+        return (audio_f32 * 32767).clip(-32767, 32767).astype(np.int16)
 
     def speak(self, text: str):
         """Synthesize text with Piper and stream PCM to SDK speaker."""
