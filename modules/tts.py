@@ -22,8 +22,10 @@ class TTS:
         sdk_port: int = 5000,
         chunk_ms: int = 100,
         buffer_ms: int = 1000,
+        lead_in_ms: int = 0,
         **kwargs,
     ):
+        self.lead_in_ms = lead_in_ms
         self.chunk_ms = chunk_ms
         self.buffer_ms = buffer_ms
         self.syn_config = SynthesisConfig(length_scale=1.0 / speed)
@@ -130,6 +132,10 @@ class TTS:
 
         audio_f32 = np.concatenate([c.audio_float_array for c in chunks])
         pcm = (audio_f32 * 32767).clip(-32767, 32767).astype(np.int16)
+
+        # Leading silence: a cold SDK speaker can clip the start of short clips ("Ok.", "Ready.")
+        if self.lead_in_ms > 0:
+            pcm = np.concatenate([np.zeros(int(self.sample_rate * self.lead_in_ms / 1000), dtype=np.int16), pcm])
 
         sr = self.sample_rate
         ch = 1
