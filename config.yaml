@@ -18,8 +18,14 @@ shutdown_command: "shut down the voice service"   # exact phrase triggers sys.ex
 
 # Soft mute: keep transcribing but do not respond (or wake) until unmuted.
 # Matching ignores case and punctuation. Each may be a string or a list of phrases.
-mute_command: "mute yourself"        # says "Ok." and drops to background mode
-unmute_command: "resume listening"    # says "Ready."
+mute_command: "mute yourself"        # drops to background mode and says mute_ack
+unmute_command: "resume listening"    # says unmute_ack
+
+# Spoken acknowledgements. Keep them a few words long: very short clips get clipped by the
+# SDK speaker (leading/trailing silence padding did not fix this).
+mute_ack: "Okay, I'll stay quiet until you tell me to resume."
+unmute_ack: "Okay, I'm listening again. Ready when you are."
+wake_ack: "Yes, I'm listening. How can I help?"
 
 # Pre-recorded audio: saying `phrase` plays `file` (WAV on the robot) instead of live TTS.
 # Works in background and conversation mode, muted or not; does not change mute state and

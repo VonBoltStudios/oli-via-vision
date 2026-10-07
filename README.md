@@ -17,9 +17,11 @@ Explicit commands are matched against the transcript (case and punctuation ignor
 | Command | Config key | Behavior |
 |---|---|---|
 | Shutdown | `shutdown_command` (default "shut down the voice service") | Exits the app. Works in any state, including muted. |
-| Soft mute | `mute_command` (default "oli stop listening") | Oli says "Ok.", drops to background mode, and stops responding. Speech is still transcribed so commands can be heard. |
-| Unmute | `unmute_command` (default "oli resume listening") | Oli says "Ready." and resumes normal wake detection. |
+| Soft mute | `mute_command` (default "oli stop listening") | Oli speaks `mute_ack`, drops to background mode, and stops responding. Speech is still transcribed so commands can be heard. |
+| Unmute | `unmute_command` (default "oli resume listening") | Oli speaks `unmute_ack` and resumes normal wake detection. |
 | Pre-recorded audio | `audio_commands` (list of `phrase` + `file`) | Plays a WAV via the SDK's `request_audio_play_file` instead of live TTS. Works in either mode, muted or not; does not change mute state and is not added to the LLM conversation history. |
+
+`mute_ack`, `unmute_ack` and `wake_ack` set the spoken acknowledgements (mute, unmute, and the reply when Oli wakes from background). Keep them a few words long — very short clips get clipped by the SDK speaker.
 
 `mute_command` and `unmute_command` accept a single phrase or a list (useful for Whisper spelling variants such as "Ollie"). Mute state is in memory only — a restart comes back unmuted.
 

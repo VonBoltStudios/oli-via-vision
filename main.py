@@ -84,6 +84,9 @@ def main():
         norm = _norm(text)
         return next((f for phrase, f in audio_cmds if phrase in norm), None)
 
+    mute_ack = cfg.get("mute_ack", "Ok.")
+    unmute_ack = cfg.get("unmute_ack", "Ready.")
+    wake_ack = cfg.get("wake_ack", "Yes?")
     muted = False  # soft mute: keep transcribing, but only act on mute/unmute/shutdown commands
 
     bg = cfg.get("background", {})
@@ -148,7 +151,7 @@ def main():
                     if any(c in norm for c in unmute_cmds):
                         print("\n  [unmute command]")
                         muted = False
-                        tts.speak("Ready.")
+                        tts.speak(unmute_ack)
                         audio.flush()
                     else:
                         print(f"  [muted] ignored: {text[:60]!r}", end="\r")
@@ -157,7 +160,7 @@ def main():
                 if any(c in norm for c in mute_cmds):
                     print("\n  [mute command]")
                     muted = True
-                    tts.speak("Ok.")
+                    tts.speak(mute_ack)
                     audio.flush()
                     continue
 
@@ -169,7 +172,7 @@ def main():
                     print(f"  [background] ignored: {text[:60]!r}", end="\r")
 
         # ── CONVERSATION MODE ─────────────────────────────────────────────────
-        tts.speak("Yes?")
+        tts.speak(wake_ack)
         audio.flush()
         llm.reset()
 
@@ -212,7 +215,7 @@ def main():
             if any(c in _norm(text) for c in mute_cmds):
                 print("  [mute command — returning to background]")
                 muted = True
-                tts.speak("Ok.")
+                tts.speak(mute_ack)
                 audio.flush()
                 break
 
