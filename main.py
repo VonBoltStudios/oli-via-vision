@@ -66,7 +66,6 @@ def main():
         speed=cfg["tts"]["speed"],
         sdk_host=cfg["sdk"]["host"],
         sdk_port=cfg["sdk"]["port"],
-        lead_in_ms=cfg["tts"].get("lead_in_ms", 0),
     )
 
     name = cfg["persona"]["name"]
