@@ -16,6 +16,11 @@ conversation:
 
 shutdown_command: "shut down the voice service"   # exact phrase triggers sys.exit
 
+# Soft mute: keep transcribing but do not respond (or wake) until unmuted.
+# Matching ignores case and punctuation. Each may be a string or a list of phrases.
+mute_command: "oli stop listening"        # says "Ok." and drops to background mode
+unmute_command: "oli resume listening"    # says "Ready."
+
 stt:
   model: "medium"             # faster-whisper model size (confirmed on Oli: medium)
   language: "en"

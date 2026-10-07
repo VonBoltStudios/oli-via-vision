@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Oli Voice Interaction App — background/conversation state machine."""
 
+import re
 import sys
 import yaml
 from modules.audio import WSAudioCapture
@@ -12,6 +13,20 @@ from modules.tts import TTS
 def load_config(path: str = "config.yaml") -> dict:
     with open(path) as f:
         return yaml.safe_load(f)
+
+
+def _norm(text: str) -> str:
+    """Lowercase and strip punctuation so 'Oli, stop listening.' matches 'oli stop listening'."""
+    return " ".join(re.sub(r"[^\w\s]", " ", text.lower()).split())
+
+
+def _phrases(value) -> list:
+    """Accept a single phrase or a list of phrases from config; return normalized list."""
+    if not value:
+        return []
+    if isinstance(value, str):
+        value = [value]
+    return [_norm(v) for v in value if v]
 
 
 def main():
@@ -48,6 +63,9 @@ def main():
     name = cfg["persona"]["name"]
     ptt_mode = cfg.get("push_to_talk", False)
     shutdown_cmd = cfg.get("shutdown_command", "shut down the voice service").lower()
+    mute_cmds = _phrases(cfg.get("mute_command", "oli stop listening"))
+    unmute_cmds = _phrases(cfg.get("unmute_command", "oli resume listening"))
+    muted = False  # soft mute: keep transcribing, but only act on mute/unmute/shutdown commands
 
     bg = cfg.get("background", {})
     bg_wait_s = bg.get("wait_timeout_s", 0.5)
@@ -99,6 +117,24 @@ def main():
                     tts.speak("Shutting down.")
                     sys.exit(0)
 
+                norm = _norm(text)
+                if muted:
+                    if any(c in norm for c in unmute_cmds):
+                        print("\n  [unmute command]")
+                        muted = False
+                        tts.speak("Ready.")
+                        audio.flush()
+                    else:
+                        print(f"  [muted] ignored: {text[:60]!r}", end="\r")
+                    continue
+
+                if any(c in norm for c in mute_cmds):
+                    print("\n  [mute command]")
+                    muted = True
+                    tts.speak("Ok.")
+                    audio.flush()
+                    continue
+
                 answer = llm.classify(wake_prompt_template.replace("{text}", text))
                 if "YES" in answer.upper():
                     print(f"\n  [wake — heard: {text}]")
@@ -139,6 +175,13 @@ def main():
             if shutdown_cmd in text.lower():
                 tts.speak("Shutting down.")
                 sys.exit(0)
+
+            if any(c in _norm(text) for c in mute_cmds):
+                print("  [mute command — returning to background]")
+                muted = True
+                tts.speak("Ok.")
+                audio.flush()
+                break
 
             exit_prompt = (
                 f'The user said: "{text}"\n'
