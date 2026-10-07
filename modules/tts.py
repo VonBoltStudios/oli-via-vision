@@ -23,11 +23,9 @@ class TTS:
         chunk_ms: int = 100,
         buffer_ms: int = 1000,
         lead_in_ms: int = 0,
-        tail_ms: int = 0,
         **kwargs,
     ):
         self.lead_in_ms = lead_in_ms
-        self.tail_ms = tail_ms
         self.chunk_ms = chunk_ms
         self.buffer_ms = buffer_ms
         self.syn_config = SynthesisConfig(length_scale=1.0 / speed)
@@ -176,8 +174,7 @@ class TTS:
             print(f"[TTS] Playback error: {e}")
 
         remaining = sent_s - (time.monotonic() - start)
-        # tail_ms: extra wait so a late-starting speaker finishes before playback is disabled
-        time.sleep(max(0.3, remaining + 0.2 + self.tail_ms / 1000))
+        time.sleep(max(0.3, remaining + 0.2))
         self._send("request_audio_playback_control", {"enable": 0})
 
     # ── Pre-recorded audio ────────────────────────────────────────────────────
