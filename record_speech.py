@@ -3,6 +3,9 @@
 
 Usage: python3 record_speech.py [config.yaml]
 
+Inline [p0.6] in the text inserts 0.6 s of silence; tts.sentence_pause_s (config, default
+0.35) sets the gap between sentences.
+
 Files are saved to recordings/ (gitignored). Play one back with the audio_commands
 config, e.g.  file: "recordings/intro.wav"  (relative paths resolve against the app root).
 """
@@ -15,6 +18,7 @@ import time
 import wave
 from datetime import datetime
 
+import numpy as np
 import yaml
 
 from modules.tts import TTS
@@ -69,6 +73,43 @@ def with_spinner(label: str, fn):
         print("\r" + " " * (len(label) + 14) + "\r", end="")
 
 
+PAUSE_TAG = re.compile(r"\[p(\d+(?:\.\d+)?)\]")
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
+
+def synthesize_with_pauses(tts, text: str, sentence_pause_s: float = 0.0):
+    """Synthesize text one sentence at a time, joined with explicit silence.
+
+    Inline [p0.6] inserts 0.6 s of silence at that point. sentence_pause_s adds a default
+    gap between sentences. Line breaks/extra whitespace are collapsed (they upset Piper).
+    """
+    def silence(seconds):
+        return np.zeros(int(tts.sample_rate * seconds), dtype=np.int16)
+
+    parts, pending, total_pause = [], 0.0, 0.0
+    pieces = PAUSE_TAG.split(text)  # text, pause, text, pause, ...
+    for i, piece in enumerate(pieces):
+        if i % 2:  # pause tag
+            pending += float(piece)
+            continue
+        for sentence in SENTENCE_END.split(" ".join(piece.split())):
+            if not sentence:
+                continue
+            gap = pending + (sentence_pause_s if parts else 0.0)
+            if gap:
+                parts.append(silence(gap))
+                total_pause += gap
+            pending = 0.0
+            seg = tts.synthesize(sentence)
+            print(f"  [{len(seg) / tts.sample_rate:4.1f}s] {sentence[:60]}")
+            parts.append(seg)
+    if pending:  # trailing tag
+        parts.append(silence(pending))
+        total_pause += pending
+    print(f"  ({total_pause:.1f}s of pauses)")
+    return np.concatenate(parts) if parts else np.zeros(0, dtype=np.int16)
+
+
 def write_wav(path: str, pcm, sample_rate: int):
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
@@ -101,7 +142,8 @@ def main():
             continue
 
         while True:
-            pcm = with_spinner("Generating", lambda: tts.synthesize(text))
+            # Spinner would overwrite the per-segment lines, so print them plainly.
+            pcm = synthesize_with_pauses(tts, text, cfg["tts"].get("sentence_pause_s", 0.35))
             if len(pcm) == 0:
                 print("  [nothing generated]")
             else:
