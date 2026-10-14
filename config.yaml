@@ -77,9 +77,10 @@ vision:
     timeout_ms: 3000
     depth: false                # depth stream is supported but unused in this version
   detector:
-    backend: "rfdetr_trt"       # rfdetr_trt | rfdetr_onnx
+    backend: "rfdetr_trt"       # rfdetr_trt | rfdetr_onnx | yolo_trt | yolo_onnx
     model_path: "/home/guest/oli_ws/models/rfdetr-nano-fp16.engine"   # rfdetr_onnx: .../rfdetr-nano.onnx
-    confidence: 0.5
+    confidence: 0.5             # RF-DETR ~0.5; YOLO-family ~0.25-0.35
+    # nms_iou: 0.45            # yolo_* classic output only
   max_objects: 10
   ack_phrases:                  # keep them several words long: very short clips get clipped
     - "Okay, let me take a look."

@@ -176,6 +176,6 @@ python3 vision_test.py -n 5 --save vision_frames       # grab -> detect -> scene
 ./start.sh                               # full app; vision turns print gate/timing lines
 ```
 
-`vision_test.py` prints per-stage timings (grab, preprocess, infer, post, serialize); `main.py` adds `llm` and `transcript -> answer ready` lines on vision turns. To try another detector, add a `Detector` subclass in `modules/vision/detector.py` and register it in `build_detector()`; select it with `vision.detector.backend`.
+`vision_test.py` prints per-stage timings (grab, preprocess, infer, post, serialize); `main.py` adds `llm` and `transcript -> answer ready` lines on vision turns. Detector backends (`vision.detector.backend`): `rfdetr_trt`, `rfdetr_onnx` (RF-DETR family) and `yolo_trt`, `yolo_onnx` (Ultralytics YOLO26/YOLO11/YOLOv8, ONNX exported on a laptop; both the NMS-free `(1,300,6)` and classic `(1,84,8400)` output layouts are handled, `vision.detector.nms_iou` applies to the classic one). YOLO-family scores want a lower `vision.detector.confidence` (about 0.25-0.35) than RF-DETR (0.5). To add another model, subclass `Detector` in `modules/vision/detector.py` and register it in `build_detector()`.
 
 TensorRT comes from the system install and is added to `sys.path` by the detector (appended, so the venv's NumPy is unaffected). The `.engine` file is specific to the GPU/TensorRT version; if it fails to load, rebuild it from the ONNX on the Oli with `trtexec` (about 2 minutes, see the Notion "Oli - Deploy detection on cameras" page).
