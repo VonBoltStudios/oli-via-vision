@@ -9,3 +9,5 @@ voices/
 .DS_Store
 _deprecated/
 recordings/
+probe/
+vision_frames/

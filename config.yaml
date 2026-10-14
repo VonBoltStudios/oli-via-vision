@@ -62,3 +62,31 @@ audio:
   chunk_ms: 80
   silence_threshold_ms: 1200  # ms of post-speech silence to end an utterance
   max_record_s: 30            # max single utterance length
+
+# Vision: in conversation mode, questions like "what do you see?" trigger a short spoken
+# ack, one head-camera frame, object detection, and the object list goes to the LLM.
+# If vision fails to initialise at startup, Oli runs voice-only.
+vision:
+  enabled: true
+  camera:
+    serial: "349522071678"      # head RealSense D435i; confirm with `python3 vision_probe.py`
+    width: 1280
+    height: 720
+    fps: 30
+    warmup_frames: 10           # frames discarded after start so auto-exposure settles
+    timeout_ms: 3000
+    depth: false                # depth stream is supported but unused in this version
+  detector:
+    backend: "rfdetr_trt"       # rfdetr_trt | rfdetr_onnx
+    model_path: "/home/guest/oli_ws/models/rfdetr-nano-fp16.engine"   # rfdetr_onnx: .../rfdetr-nano.onnx
+    confidence: 0.5
+  max_objects: 10
+  ack_phrases:                  # keep them several words long: very short clips get clipped
+    - "Okay, let me take a look."
+    - "One moment, let me look around."
+    - "Sure, let me see what's in front of me."
+  fail_phrase: "I'm having trouble seeing right now."
+  # patterns: regexes matched against the lowercased transcript with apostrophes removed
+  # ("whats on", not "what's on"). Omit to use the built-in list in modules/vision/gate.py.
+  # patterns:
+  #   - '\bwhat (do|can) you see\b'

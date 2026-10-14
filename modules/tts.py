@@ -139,13 +139,13 @@ class TTS:
         if not text:
             return
 
-        chunks = list(self.model.synthesize(text, syn_config=self.syn_config))
-        if not chunks:
+        pcm = self.synthesize(text)
+        if len(pcm) == 0:
             return
+        self.speak_pcm(pcm)
 
-        audio_f32 = np.concatenate([c.audio_float_array for c in chunks])
-        pcm = (audio_f32 * 32767).clip(-32767, 32767).astype(np.int16)
-
+    def speak_pcm(self, pcm: np.ndarray):
+        """Stream already-synthesized mono int16 PCM (see synthesize) to the SDK speaker."""
         sr = self.sample_rate
         ch = 1
         chunk_samples = int(sr * self.chunk_ms / 1000) * ch

@@ -4,6 +4,7 @@
 import os
 import re
 import sys
+import time
 import yaml
 from modules.audio import WSAudioCapture
 from modules.stt import STT
@@ -105,6 +106,19 @@ def main():
     conv_silence_ms = cfg["audio"]["silence_threshold_ms"]
     conv_max_s = cfg["audio"]["max_record_s"]
 
+    # Vision (optional): if it fails to initialise, Oli carries on as a voice-only assistant.
+    vision = None
+    vcfg = cfg.get("vision") or {}
+    if vcfg.get("enabled", False):
+        try:
+            from modules.vision import Vision
+            vision = Vision(vcfg)
+            vision.warmup()
+            vision.prepare_acks(tts)
+        except Exception as e:
+            print(f"[Vision] disabled — init failed: {type(e).__name__}: {e}")
+            vision = None
+
     print(f"\n{name} is ready.")
     if ptt_mode:
         print("Mode: push-to-talk (dev) — press Enter to speak, Ctrl+C to quit.\n")
@@ -201,6 +215,7 @@ def main():
                 continue
 
             print(f"  You: {text}")
+            t_turn = time.monotonic()
 
             if shutdown_cmd in text.lower():
                 tts.speak("Shutting down.")
@@ -220,6 +235,26 @@ def main():
                 audio.flush()
                 break
 
+            # Vision: if the question asks about what Oli can see, speak a short ack while
+            # grabbing a frame and detecting objects, then hand the scene text to the LLM.
+            llm_input = text
+            vision_turn = False
+            if vision and vision.needs_vision(text):
+                ack = vision.start_ack(tts)
+                scene = vision.scene_snapshot()
+                if ack:
+                    ack.join()
+                audio.flush()
+                if not scene.ok:
+                    print(f"  [vision] failed: {scene.error}  ({scene.timing_line()})")
+                    tts.speak(vision.fail_phrase)
+                    audio.flush()
+                    continue
+                print(f"  [vision] {scene.n_detections} detection(s) | {scene.timing_line()}")
+                print("  " + scene.text.replace("\n", "\n  "))
+                llm_input = vision.build_prompt(scene.text, text)
+                vision_turn = True
+
             exit_prompt = (
                 f'The user said: "{text}"\n'
                 f'Are they signaling the end of the conversation — saying goodbye, '
@@ -227,8 +262,12 @@ def main():
             )
             is_ending = "YES" in llm.classify(exit_prompt).upper()
 
-            reply = llm.chat(text)
+            t_llm = time.monotonic()
+            reply = llm.chat(llm_input)
             print(f"  {name}: {reply}")
+            if vision_turn:
+                now = time.monotonic()
+                print(f"  [vision] llm {now - t_llm:.2f}s | transcript -> answer ready {now - t_turn:.2f}s")
             tts.speak(reply)
             audio.flush()
 

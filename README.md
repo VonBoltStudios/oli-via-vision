@@ -152,3 +152,30 @@ rm -rf ~/.ollama
 **Mute or audio command not triggering:** Whisper may spell "Oli" differently ("Ollie", "Ali"). Add variants by turning the phrase into a list in `config.yaml` (mute/unmute), or add another `audio_commands` entry.
 
 **Oli triggering too easily in background:** Raise `background.silence_threshold_ms` (more speech required before a clip is classified) or adjust the `wake_classifier_prompt` to be more conservative.
+
+## Vision (oli-via-vision)
+
+In conversation mode, questions that ask about Oli's surroundings ("what do you see?", "what's on the table?", "is there a cup in front of you?") trigger:
+
+1. a short pre-synthesized spoken acknowledgement ("Okay, let me take a look."), played on a background thread,
+2. one frame from the head RealSense camera (opened per request, so the robot's own camera driver does not need to be disabled),
+3. object detection (RF-DETR Nano, COCO classes, TensorRT FP16),
+4. the object list (counts, size, left/right from Oli's point of view) prepended to the question and sent to the LLM.
+
+Whether a question triggers vision is decided by regexes in `modules/vision/gate.py` (override with `vision.patterns` in `config.yaml`); every gate decision is printed so misses can be added. If the camera or detector fails, Oli says `vision.fail_phrase` and the conversation continues. If vision fails to initialise at startup, Oli runs voice-only.
+
+Code: `modules/vision/` (`camera.py`, `detector.py`, `scene.py`, `gate.py`, facade in `__init__.py`). Config: the `vision:` block in `config.yaml`.
+
+### Trying it on Oli
+
+```bash
+pip install "pyrealsense2==2.56.5.9235" "cuda-python<13" pillow   # in .venv (install.sh does this too)
+python3 vision_probe.py                  # list cameras, save a frame from each to probe/ - confirm which is the head
+python3 vision_test.py --gate "what's on the table?"   # check the gate (no camera needed)
+python3 vision_test.py -n 5 --save vision_frames       # grab -> detect -> scene text + per-stage timing
+./start.sh                               # full app; vision turns print gate/timing lines
+```
+
+`vision_test.py` prints per-stage timings (grab, preprocess, infer, post, serialize); `main.py` adds `llm` and `transcript -> answer ready` lines on vision turns. To try another detector, add a `Detector` subclass in `modules/vision/detector.py` and register it in `build_detector()`; select it with `vision.detector.backend`.
+
+TensorRT comes from the system install and is added to `sys.path` by the detector (appended, so the venv's NumPy is unaffected). The `.engine` file is specific to the GPU/TensorRT version; if it fails to load, rebuild it from the ONNX on the Oli with `trtexec` (about 2 minutes, see the Notion "Oli - Deploy detection on cameras" page).

@@ -26,6 +26,9 @@ source .venv/bin/activate
 
 pip install --upgrade pip -q
 pip install -q \
+    "pyrealsense2==2.56.5.9235" \
+    "cuda-python<13" \
+    pillow \
     faster-whisper \
     piper-tts \
     ollama \
